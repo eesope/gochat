@@ -14,7 +14,7 @@ type Command interface{} // to manage client commands in chatserver
 type SetNick struct {
 	ClientID string // client identifier
 	Nick     string
-	Reply    chan Response // WHY
+	Reply    chan Response // channel to receive response after process command
 }
 
 type List struct {
@@ -30,7 +30,7 @@ type Msg struct {
 
 type Client struct {
 	Nickname string
-	Conn     net.Conn // connection addr
+	Conn     net.Conn // tcp connection info
 }
 
 var (
@@ -103,6 +103,10 @@ func (s *ChatServer) handleSetNick(c SetNick) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// check 2 condition:
+	// 1. existingConn, exists := s.clients[c.Nick] -> map lookup -> true if exists && assign that value to existingConn
+	// 2. if ^ is true, once again check existingConn != nil
+
 	if existingConn, exists := s.clients[c.Nick]; exists && existingConn != nil {
 		c.Reply <- Response{Success: false, Message: "Nickname already in use"}
 		return
@@ -127,7 +131,7 @@ func (s *ChatServer) handleSetNick(c SetNick) {
 	c.Reply <- Response{Success: true, Message: "Nickname set to " + c.Nick}
 }
 
-// Helper: RegisterClient update (proxy offers connection)
+// proxy offers connection for each client
 func (s *ChatServer) RegisterClient(nick string, conn net.Conn) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

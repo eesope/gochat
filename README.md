@@ -16,9 +16,10 @@ process command | /NICK, /LIST, /MSG |
 
 ```bash
 # server start
-go run main.go
+go run server/server.go
 
 # client start
+go run client/go_client.go
 elixir dumb_client.ex localhost 6666
 ```
 
